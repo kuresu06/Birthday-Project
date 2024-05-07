@@ -20,6 +20,8 @@ def main():
     bdays = random.sample(bdays, len(bdays))
     bdays = sort_by_date(bdays)
 
+    get_next_five(sort_by_date(bdays+hdays))
+
 def get_all_times(h, b):
     all = []
     for x in [h, b]:
@@ -27,8 +29,18 @@ def get_all_times(h, b):
             all.append(y.get_next_time())
     return all
 
-def get_next_five():
-    return
+def get_next_five(all):
+    for i in all:
+        if type(i).__name__ == 'Human':
+            if (i.get_next_time().days == 0):
+                print(f'Birthday of {i.first} {i.last} is today!')
+            else:
+                print(f'Birthday of {i.first} {i.last} in {i.get_next_time().days} days')
+        if type(i).__name__ == 'Holiday':
+            if (i.get_next_time().days == 0):
+                print(f'{i.name} is today!')
+            else:
+                print(f'Holiday - {i.name} in {i.get_next_time().days} days')
 
 
 class Human():
@@ -50,8 +62,10 @@ class Human():
         time = self.date - today
         if(time.days<0):
             time = self.date.replace(year = today.year+1) - today
-
-        return time.days
+        return time
+    
+    def __gt__(self, other):
+        return self.date > other.date 
 
 def read_humans(file_name):
     humans=[]
@@ -79,13 +93,13 @@ class Holiday():
         time = self.date - today
         if(time.days<0):
             time = self.date.replace(year = today.year+1) - today
-        return time.days
+        return time
     
     def __str__(self):
         return f"{self.name} {self.date}"
     
     def __gt__(self, other):
-        return self.date > other.date
+        return self.date > other.date 
 
 def read_holidays():
     url = f'https://www.wincalendar.com/Calendar-Lithuania/{today.year}'
@@ -108,11 +122,12 @@ def sort_by_date(dates):
     while(swap):
         swap = False
         for i in range(len(dates)):
-            if i+1<len(dates) and (dates[i].date>dates[i+1].date):
+            if i+1<len(dates) and (dates[i]>dates[i+1]):
                 temp = dates[i]
                 dates[i] = dates[i+1]
                 dates[i+1] = temp
                 swap = True
     return dates
+
 if __name__ == "__main__":
     main()
