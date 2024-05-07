@@ -3,6 +3,7 @@ import csv
 import re
 import sys
 import requests
+from bs4 import BeautifulSoup
 
 def main():
     humans = read_human("./Data/birthdays.csv")
@@ -34,12 +35,6 @@ class Human():
             time = self.birthday.replace(year = today.year+1) - today
 
         return str(time)
-    
-# class Holiday():
-#     def __init__(self, name, date):
-#         self.name = name
-#         self.date = date
-        
 
 def read_human(file_name):
     humans=[]
@@ -52,9 +47,41 @@ def read_human(file_name):
 def add_human(first, last, birthday, L):
     L.append(Human(first, last, birthday))
 
-
 def write_human(file):
     return
+
+class Holiday():
+    def __init__(self, date, en_name, lt_name, remarks):
+        self.date = date
+        self.en_name = en_name
+        self.lt_name = lt_name
+        self.remarks = remarks
+
+def read_holidays():
+    url = 'https://en.wikipedia.org/wiki/Public_holidays_in_Lithuania'
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    table = soup.find('table', class_="wikitable")
+
+    headers = table.find_all('th')
+    header = []
+    for h in headers:
+        if t:= h.get_text(strip=True):
+            header.append(t)
+
+    data=[]
+    trs = table.find_all('tr')
+    for field in trs:
+        new = []
+        tds = field.find_all('td')
+        for t in tds:
+            if t.get_text(strip=True):
+                new.append(t.get_text(strip=True))
+        if(len(new)!=0):
+            d = {}
+            for i in range(len(new)):
+                d.update({header[i]:new[i]})
+            data.append(d)
 
 
 if __name__ == "__main__":
