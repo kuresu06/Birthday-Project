@@ -5,22 +5,53 @@ import sys
 from requests import get
 from bs4 import BeautifulSoup
 import random
+from tkinter import *
 
 today = datetime.date.today()
 months = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
 
 def main():
+    # Storing data
     bdays = read_humans("./Data/birthdays.csv")
-    add_human('a', 'b', '2004-07-22', bdays)
+    add_human('vardas', 'pavarde', '2004-07-22', bdays)
 
     hdays = read_holidays()
-    hdays = random.sample(hdays, len(hdays))
-    hdays = sort_by_date(hdays)
 
-    bdays = random.sample(bdays, len(bdays))
-    bdays = sort_by_date(bdays)
+    # Making GUI
+    root = Tk()
+    root.title("Date reminder")
+    root.geometry("800x800")
+    head_Label = Label(root, text="Date reminder", font=("Helvetica", 24))
+    head_Label.pack()
 
-    get_next_five(sort_by_date(bdays+hdays))
+    entry_label = Label(root, text="How many upcoming dates to display?", font=("Helvetica", 12))
+    entry_label.pack(pady=20)
+
+    entry = Entry(root)
+    entry.pack(pady=10)
+
+    display_button = Button(root, text="Display",
+                             command= lambda: create_dates_display(root, entry.get(), sort_by_time(bdays+hdays)))
+    display_button.pack(pady=20)
+    
+
+
+    root.mainloop()
+
+def create_dates_display(root, amount, dates):
+    try:
+        amount = int(amount.strip())
+    except:
+        if hasattr(root, 'lbl'):
+            root.lbl.destroy()
+        root.lbl = Label(root, text="invalid")
+        root.lbl.pack()
+        return
+
+    if hasattr(root, 'lbl'):
+        root.lbl.destroy()
+    root.lbl = Label(root, text=get_dates_txt(dates, amount), font=("Helvetica", 12))
+    root.lbl.pack()
 
 def get_all_times(h, b):
     all = []
@@ -29,8 +60,8 @@ def get_all_times(h, b):
             all.append(y.get_next_time())
     return all
 
-def get_next_five(all):
-    for i in all:
+def get_dates(all, amount):
+    for i in all[:amount]:
         if type(i).__name__ == 'Human':
             if (i.get_next_time().days == 0):
                 print(f'Birthday of {i.first} {i.last} is today!')
@@ -41,6 +72,21 @@ def get_next_five(all):
                 print(f'{i.name} is today!')
             else:
                 print(f'Holiday - {i.name} in {i.get_next_time().days} days')
+
+def get_dates_txt(all, amount):
+    txt = ""
+    for i in all[:amount]:
+        if type(i).__name__ == 'Human':
+            if (i.get_next_time().days == 0):
+                txt+=f'Birthday of {i.first} {i.last} is today!\n'
+            else:
+                txt+=f'Birthday of {i.first} {i.last} in {i.get_next_time().days} days\n'
+        if type(i).__name__ == 'Holiday':
+            if (i.get_next_time().days == 0):
+                txt+=f'{i.name} is today!\n'
+            else:
+                txt+=f'Holiday - {i.name} in {i.get_next_time().days} days\n'
+    return txt
 
 
 class Human():
@@ -73,15 +119,12 @@ def read_humans(file_name):
         reader = csv.DictReader(file)
         for row in reader:
             humans.append(Human(row['first'], row['last'], row['birthdate']))
+
     return humans
 
 def add_human(first, last, birthday, L):
     L.append(Human(first, last, birthday))
 
-def write_human(file):
-    return
-
-#--------------------------------------------------------
 class Holiday():
     def __init__(self, name, date):
         self.name = name
@@ -117,17 +160,17 @@ def read_holidays():
             holidays.append(Holiday(a, t))
     return holidays
 
-def sort_by_date(dates):
+def sort_by_time(times):
     swap = True
     while(swap):
         swap = False
-        for i in range(len(dates)):
-            if i+1<len(dates) and (dates[i]>dates[i+1]):
-                temp = dates[i]
-                dates[i] = dates[i+1]
-                dates[i+1] = temp
+        for i in range(len(times)):
+            if i+1<len(times) and (times[i].get_next_time()>times[i+1].get_next_time()):
+                temp = times[i]
+                times[i] = times[i+1]
+                times[i+1] = temp
                 swap = True
-    return dates
+    return times
 
 if __name__ == "__main__":
     main()
